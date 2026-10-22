@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.header.name if resume.header else "简历" }}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #ffffff; }
+  body { font-family: "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+         color: #232527; font-size: 10pt; line-height: 1.48; line-break: strict; overflow-wrap: break-word; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px;
+            border-bottom: 3px solid #197998; padding-bottom: 9px; margin-bottom: 11px; }
+  .name { font-size: 23pt; line-height: 1.1; font-weight: 750; color: #197998; letter-spacing: .5px; }
+  .title { margin-top: 3px; font-size: 11pt; font-weight: 600; color: #232527; }
+  .contact { text-align: right; color: #555b61; font-size: 9pt; line-height: 1.5; }
+  .section { margin-bottom: 10px; }
+  .section-title { display: flex; align-items: center; gap: 7px; color: #197998; font-size: 12.2pt;
+                   font-weight: 700; margin-bottom: 5px; break-after: avoid; }
+  .section-title::before { content: ""; width: 17px; height: 2px; background: #197998; flex: none; }
+  .item { margin-bottom: 7px; padding-left: 9px; border-left: 1px solid #d6dce1; break-inside: avoid; }
+  .item-head { display: flex; justify-content: space-between; gap: 12px; font-size: 10.3pt; font-weight: 700; }
+  .period { color: #555b61; font-size: 9pt; font-weight: 400; white-space: nowrap; }
+  .summary { padding: 7px 9px; background: #f5f8f9; border-left: 3px solid #197998; }
+  .skills-grid { display: grid; gap: 2px; }
+  .skill-row { display: grid; grid-template-columns: max-content 1fr; column-gap: 6px; break-inside: avoid; }
+  .skill-values { display: flex; flex-wrap: wrap; }
+  .skill { white-space: nowrap; }
+  .skill:not(:last-child)::after { content: "  ·  "; color: #b8cbd2; }
+  .skill-level { color: #555b61; margin-left: 3px; }
+  ul { padding-left: 17px; margin-top: 2px; }
+  li { margin-bottom: 1px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 3px; }
+  .tag { color: #197998; background: #ebedee; border-radius: 3px; padding: 1px 6px; font-size: 9pt; }
+  .cert-item { display: flex; justify-content: space-between; gap: 12px; break-inside: avoid; }
+</style>
+</head>
+<body>
+{% set header = resume.header %}
+<header class="header"><div><div class="name">{{ header.name }}</div>{% if header.title %}<div class="title">{{ header.title }}</div>{% endif %}</div><div class="contact">{% if header.contact %}{% for k, v in header.contact.items() %}{% if v %}{{ v }}<br>{% endif %}{% endfor %}{% endif %}</div></header>
+{% for sec in resume.sections %}
+<section class="section"><div class="section-title">{{ sec.title }}</div>
+{% if sec.type == "summary" %}<div class="summary">{{ sec.content }}</div>
+{% elif sec.type == "skills" %}<div class="skills-grid">{% for group in sec.skill_groups %}<div class="skill-row"><strong>{{ group.category }}：</strong><div class="skill-values">{% for s in group["items"] %}<span class="skill">{{ s.name }}{% if s.level %}<span class="skill-level">（{{ s.level }}）</span>{% endif %}</span>{% endfor %}</div></div>{% endfor %}</div>
+{% elif sec.type == "experience" %}{% for item in sec["items"] %}<article class="item"><div class="item-head"><span>{{ item.company }} · {{ item.position }}</span><span class="period">{{ item.period }}</span></div><ul>{% for b in item.bullets %}<li>{{ b }}</li>{% endfor %}</ul></article>{% endfor %}
+{% elif sec.type == "projects" %}{% for item in sec["items"] %}<article class="item"><div class="item-head"><span>{{ item.name }} · {{ item.role }}</span><span class="period">{{ item.period }}</span></div>{% if item.tech_stack %}<div class="tags">{% for t in item.tech_stack %}<span class="tag">{{ t }}</span>{% endfor %}</div>{% endif %}<ul>{% for b in item.bullets %}<li>{{ b }}</li>{% endfor %}</ul></article>{% endfor %}
+{% elif sec.type == "education" %}{% for item in sec["items"] %}<article class="item"><div class="item-head"><span>{{ item.school }} · {{ item.major }}（{{ item.degree }}）</span><span class="period">{{ item.period }}</span></div></article>{% endfor %}
+{% elif sec.type == "certifications" %}{% for item in sec["items"] %}<div class="cert-item"><span>{{ item.name }}{% if item.issuer %} · {{ item.issuer }}{% endif %}</span><span class="period">{{ item.date }}</span></div>{% endfor %}
+{% endif %}</section>
+{% endfor %}
+</body>
+</html>

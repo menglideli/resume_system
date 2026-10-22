@@ -1,0 +1,59 @@
+# 一键编排：app + MySQL 8 + Redis（指令 9）
+services:
+  app:
+    build: .
+    container_name: resume-system-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql+asyncmy://root:root@db:3306/resume_system
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./storage:/code/storage          # 上传与导出文件持久化
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: resume-system-db
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: resume_system
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro   # 首次启动自动建表
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build: ../frontend               # 前端工程（React + Vite）。原为 ../app，该目录不存在会导致 compose 构建失败
+    container_name: resume-system-web
+    ports:
+      - "80:80"                      # 访问入口：http://服务器IP/
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: resume-system-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  mysqldata:
